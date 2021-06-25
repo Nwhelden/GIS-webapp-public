@@ -1,0 +1,14 @@
+{
+  "projects": {
+    "default": "rd-testing-summer-2021"
+  },
+  "targets": {
+    "rd-testing-summer-2021": {
+      "hosting": {
+        "public": [
+          "imerza-public"
+        ]
+      }
+    }
+  }
+}
