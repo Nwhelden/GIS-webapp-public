@@ -18,6 +18,12 @@ export function AuthProvider({ children }) {
         const cleanup = auth.onAuthStateChanged((user) => {
             setCurrentUser(user);
             setPending(false);
+
+            if (user) {
+                console.log(`logged in as ${user.email}`)
+            } else {
+                console.log("logged out")
+            }
         });
 
         //listener cleanup; onAuthStateChanged triggers when a user signs-in and returns a function to unsubscribe

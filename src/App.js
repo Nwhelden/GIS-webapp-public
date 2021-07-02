@@ -1,5 +1,5 @@
 import { BrowserRouter as Router, Switch, Route, Redirect } from 'react-router-dom'
-import PrivateRoute from './components/PrivateRoute'
+import PrivateRoute from './components/routing/PrivateRoute'
 import SignUp from './views/SignUp'
 import LogIn from './views/LogIn'
 import Dashboard from './views/Dashboard'
