@@ -13,6 +13,7 @@ env:
   REACT_APP_FIREBASE_STORAGE_BUCKET: ${{ secrets.REACT_APP_FIREBASE_STORAGE_BUCKET }}
   REACT_APP_FIREBASE_SENDER_ID: ${{ secrets.REACT_APP_FIREBASE_SENDER_ID }}
   REACT_APP_FIREBASE_APP_ID: ${{ secrets.REACT_APP_FIREBASE_APP_ID }}
+  REACT_APP_ADMIN_KEY: ${{ secrets.REACT_APP_ADMIN_KEY }}
 jobs:
   build_and_deploy:
     runs-on: ubuntu-latest
