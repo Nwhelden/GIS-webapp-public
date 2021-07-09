@@ -3,6 +3,10 @@ import firebase from 'firebase/app'; //need to import uninitialized firebase obj
 import { auth, db } from '../../firebase'
 import { Link, useHistory } from 'react-router-dom'
 
+//REFACTOR: some of the functionality overlapped by UserSignUp and OrgSignup could be handled by a cloud function using authentication triggers
+//such a function could also be used to help with the admin site authentication
+//ex: adding a document to database for a user when a user is created
+
 export default function SignUp() {
     const [error, setError] = useState('');
     const [pending, setPending] = useState(false); //set true when a signup request is made; prevents multiple signups in a single instance
@@ -32,27 +36,32 @@ export default function SignUp() {
         if (keyInvalid) {
             setPending(false);
             return;
-        }
-        else {
+        } else {
 
             //try to create user and redirect; otherwise display error
-            //need to wait on so currentUser updates
             await auth.createUserWithEmailAndPassword(email.value, password.value).then((userCredential) => {
 
                 //auth.currentUser.uid
                 //??? for some reason useAuth() to get currentUser returns null
 
-                //after creating user, create document 
+                //after creating a user, create a user document with additional information for the database
                 var userData = {
                     orgID: key.value, 
                     name: name.value, 
                     email: email.value, 
                     role: "collaborator", 
+                    groups: [],
                     created: firebase.firestore.FieldValue.serverTimestamp()
                 }
+
+                //try adding the user document to the database and redirect to dashboard
                 db.collection(`organizations/${key.value}/users`).doc(userCredential.user.id).set(userData).then(() => {
+                    userCredential.user.updateProfile({displayName: name.value});
                     history.push('/');
                 }).catch((err) => {
+
+                    //if user can't be added to the database, delete the user
+                    userCredential.user.delete();
                     console.log(err);
                     setError("Could not connect with the database. Please try again later.");
                 })

@@ -19,6 +19,7 @@ export default function SignUp() {
         setSignPrompt(false);
     }
 
+    //Render different signup options based on user input 
     return (
         <div>
             { signPrompt &&

@@ -6,8 +6,8 @@ import { Link } from 'react-router-dom'
 export default function SignUp() {
     const [error, setError] = useState('');
     const [pending, setPending] = useState(false); //set true when a signup request is made; prevents multiple signups in a single instance
-    const [authComplete, setAuthComplete] = useState(false);
-    const [msgData, setMsgData] = useState();
+    const [authComplete, setAuthComplete] = useState(false); //set true when an organization is created
+    const [msgData, setMsgData] = useState(); 
 
     const handleSubmit = async (event) => {
         event.preventDefault();
@@ -23,24 +23,26 @@ export default function SignUp() {
             var orgRef = db.collection("organizations").doc(); //.doc() creates a doc ref with an auto-generated id, but doesn't write to the database
             batch.set(orgRef, orgData);
 
-            //at the same time, create a user that is an "owner" of the organization
+            //at the same time, create a document for the user that was created and is an "owner" of the organization
             var userData = {
                 orgID: orgRef.id, 
                 name: ownerName.value, 
                 email: email.value, 
                 role: "owner", 
+                groups: [],
                 created: firebase.firestore.FieldValue.serverTimestamp()
             }
             var userRef = db.collection("organizations").doc(orgRef.id).collection("users").doc(userCredential.user.uid);
             batch.set(userRef, userData);
 
+            //use a batch write to create the organization and an entry in the database for the owner account at the same time
             batch.commit().then(() => {
                 setMsgData({oName: orgName.value, uEmail: email.value, oKey: orgRef.id});
                 userCredential.user.updateProfile({displayName: ownerName.value});
                 setAuthComplete(true);
             }).catch((err) => {
 
-                //if batch fails, don't want a user created
+                //if batch fails, don't want an owner account created for an organization that isn't in the database
                 userCredential.user.delete();
                 console.log(err);
                 setError("Could not connect with the database. Please try again later.");
