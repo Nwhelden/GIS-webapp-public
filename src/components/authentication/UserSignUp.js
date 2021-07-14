@@ -46,6 +46,7 @@ export default function SignUp() {
 
                 //after creating a user, create a user document with additional information for the database
                 var userData = {
+                    userID: userCredential.user.uid,
                     orgID: key.value, 
                     name: name.value, 
                     email: email.value, 
@@ -55,7 +56,7 @@ export default function SignUp() {
                 }
 
                 //try adding the user document to the database and redirect to dashboard
-                db.collection(`organizations/${key.value}/users`).doc(userCredential.user.id).set(userData).then(() => {
+                db.collection(`organizations/${key.value}/users`).doc(userCredential.user.uid).set(userData).then(() => {
                     userCredential.user.updateProfile({displayName: name.value});
                     history.push('/');
                 }).catch((err) => {

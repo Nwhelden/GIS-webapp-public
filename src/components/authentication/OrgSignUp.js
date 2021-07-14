@@ -25,6 +25,7 @@ export default function SignUp() {
 
             //at the same time, create a document for the user that was created and is an "owner" of the organization
             var userData = {
+                userID: userCredential.user.uid,
                 orgID: orgRef.id, 
                 name: ownerName.value, 
                 email: email.value, 
