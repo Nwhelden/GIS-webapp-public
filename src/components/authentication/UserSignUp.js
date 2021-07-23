@@ -11,15 +11,15 @@ import { useAuth } from "../../contexts/Auth"
 export default function SignUp() {
     const [error, setError] = useState('');
     const [pending, setPending] = useState(false); //set true when a signup request is made; prevents multiple signups in a single instance
-    const history = useHistory();
-    const {setSignupFlag, setRedirFlag} = useAuth();
+    //const history = useHistory();
+    const {setSignupFlag, setTestFlag} = useAuth();
 
     const handleSubmit = async (event) => {
         event.preventDefault();
         const { name, email, password, key } = event.target.elements; //get input from respective form fields
         setError('');
         setPending(true);
-        setRedirFlag(true);
+        setSignupFlag(true);
 
         //try to create user and redirect; otherwise display error
         await auth.createUserWithEmailAndPassword(email.value, password.value).then((userCredential) => {
@@ -47,26 +47,8 @@ export default function SignUp() {
                 querySnapshot.forEach((doc) => {
                     doc.ref.update({[`roles.${userCredential.user.uid}`]: "guest"})
                 })
-                /*
-                return new Promise((resolve, reject) => {
-                    db.collectionGroup('users').where('userID', '==', userCredential.user.uid).get().then((querySnapshot) => {
-                        querySnapshot.forEach((doc) => {
-                            var data = doc.data();
-                            db.collection(`organizations/${data.orgID}/privateData`).get().then((querySnapshot) => {
-                                querySnapshot.forEach((doc) => {
-                                    setCurrentData(doc.data());
-                                })
-                            }).then(() => {
-                                resolve("Success");
-                            })
-                        })
-                    }).catch((err) => {
-                        reject(err);
-                    })
-                })
-                */
                 console.log("redirecting...");
-                setSignupFlag(true);
+                //setSignupFlag(true);
                 //history.push('/');
             }).catch((err) => {
 
@@ -92,8 +74,9 @@ export default function SignUp() {
             }
             console.log(err);
         }).finally(() => {
-            setRedirFlag(false);
             setPending(false);
+            setTestFlag(true);
+            console.log("here")
         })
     }
 

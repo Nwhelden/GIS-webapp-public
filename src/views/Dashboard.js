@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { auth, db } from '../firebase'
 import { useAuth } from "../contexts/Auth"
 import UserList from '../components/dashboard/UserList'
@@ -9,12 +9,15 @@ export default function Dashboard() {
     const [admin, setAdmin] = useState(false);
     const [organization, setOrganization] = useState({});
     const [loading, setLoading] = useState(false);
-    const {currentUser, currentData} = useAuth();
+    const {currentUser, currentPerms, setPermsFlag} = useAuth();
+
+    useEffect(() => {
+        console.log(organization)
+    }, [organization])
 
     //get organization and determine if user is admin
     useEffect(() => {
-        console.log("loaded")
-        console.log(currentData);
+        console.log(currentPerms.roles['test'])
         const getOrg = async () => {
             await db.collectionGroup('users').where('userID', '==', currentUser.uid).get().then((querySnapshot) => {
                 querySnapshot.forEach((doc) => {
@@ -43,8 +46,12 @@ export default function Dashboard() {
         setLoading(false);
     }, [])
 
+    const buttonClick2 = () => {
+        setPermsFlag(true);
+    }
+
     const buttonClick = () => {
-        console.log(currentData.orgID);
+        console.log(currentPerms.orgID);
     }
 
     return (
@@ -68,8 +75,9 @@ export default function Dashboard() {
                 </div>
             }
             <p>{currentUser.uid}</p>
-            <p>{currentData.orgID}</p>
+            <p>{currentPerms.orgID}</p>
             <button onClick={buttonClick}>test</button>
+            <button onClick={buttonClick2}>test2</button>
         </div>
     )
 }

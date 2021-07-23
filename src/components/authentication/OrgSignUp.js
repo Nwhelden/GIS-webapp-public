@@ -9,7 +9,7 @@ export default function SignUp() {
     const [pending, setPending] = useState(false); //set true when a signup request is made; prevents multiple signups in a single instance
     const [authComplete, setAuthComplete] = useState(false); //set true when an organization is created
     const [msgData, setMsgData] = useState(); 
-    const {setSignupFlag} = useAuth();
+    const {setPermsFlag} = useAuth();
 
     const handleSubmit = async (event) => {
         event.preventDefault();
@@ -21,8 +21,9 @@ export default function SignUp() {
             var batch = db.batch();
 
             //create an organization
-            var orgData = {name: orgName.value, created: firebase.firestore.FieldValue.serverTimestamp()}
             var orgRef = db.collection("organizations").doc(); //.doc() creates a doc ref with an auto-generated id, but doesn't write to the database
+            var dataRef = db.collection("organizations").doc(orgRef.id).collection("privateData").doc();
+            var orgData = {name: orgName.value, dataID: dataRef.id, created: firebase.firestore.FieldValue.serverTimestamp()}
             batch.set(orgRef, orgData);
 
             //at the same time, create a document for the user that was created and is an "owner" of the organization
@@ -37,19 +38,27 @@ export default function SignUp() {
             batch.set(userRef, userData);
 
             //want a privateData document for the organization, which keeps track of organization-wide permissions (roles)
+            /*
+                orgID
+                users: {
+                    role: "",
+                    groups: {
+                        "name" : "permission"
+                    }
+                }
+            */
             var privateData = {
                 orgID: orgRef.id,
                 roles: {}
             }
             privateData.roles[userCredential.user.uid] = "owner";
-            var dataRef = db.collection("organizations").doc(orgRef.id).collection("privateData").doc();
             batch.set(dataRef, privateData);
 
             //use a batch write to create the organization and an entry in the database for the owner account at the same time
             batch.commit().then(() => {
                 setMsgData({oName: orgName.value, uEmail: email.value, oKey: orgRef.id});
                 userCredential.user.updateProfile({displayName: ownerName.value});
-                setSignupFlag(true);
+                setPermsFlag(true);
                 setAuthComplete(true);
             }).catch((err) => {
 

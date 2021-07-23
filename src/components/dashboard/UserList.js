@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { auth, db } from '../../firebase'
+import { db } from '../../firebase'
 import UserCard from './UserCard'
 
 export default function UserList(props) {
@@ -9,6 +9,8 @@ export default function UserList(props) {
     const [pending, setPending] = useState(false);
     const [users, setUsers] = useState([]);
     const [addRender, setAddRender] = useState(false);
+
+    const roles = ["guest", "collaborator", "admin"]
 
     //get users of specified organization
     useEffect(() => {
@@ -60,16 +62,20 @@ export default function UserList(props) {
                             <div>
                                 <form onSubmit={handleAdd}>
                                     <label>
-                                        Name
-                                        <input name="name" type="text" />
-                                    </label>
-                                    <label>
                                         Email
                                         <input name="email" type="text" />
                                     </label>
                                     <label>
-                                        Password
-                                        <input name="password" type="password" />
+                                        Role
+                                        <select name="role">
+                                            <ul>
+                                                {roles.map((role) => (
+                                                    <li key={role}>
+                                                        <option value=""></option>
+                                                    </li>
+                                                ))}
+                                            </ul>
+                                        </select>
                                     </label>
                                     <button disabled={pending}>Submit</button>
                                 </form>

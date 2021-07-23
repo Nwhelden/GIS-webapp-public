@@ -7,9 +7,8 @@ import { useAuth } from "../contexts/Auth"
 export default function LogIn() {
     const [error, setError] = useState('');
     const [pending, setPending] = useState(false); //set true when a signup request is made; prevents multiple signups in a signle instance
-    const history = useHistory();
-
-    const {setCurrentData, setTestFlag, setRedirFlag} = useAuth();
+    //const history = useHistory();
+    const {setPermsFlag} = useAuth();
 
     const handleSubmit = async (event) => {
         event.preventDefault();
@@ -19,9 +18,8 @@ export default function LogIn() {
         try {
             setError('');
             setPending(true);
-            setRedirFlag(true);
+            setPermsFlag(true);
             await auth.signInWithEmailAndPassword(email.value, password.value);
-            console.log("redirected")
             //history.push('/');
         } catch(err) {
             switch(err.code) {
@@ -44,7 +42,6 @@ export default function LogIn() {
             console.log(err);
         } finally {
             setPending(false);
-            //setRedirFlag(false);
         }
     }
 
