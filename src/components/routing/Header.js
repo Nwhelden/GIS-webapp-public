@@ -15,7 +15,7 @@ export default function Header() {
             }
             { !auth.currentUser &&
                 <div>
-                    <Link to="/login">Sign Up</Link>
+                    <Link to="/login">Log In</Link>
                     <Link to="/signup">Sign Up</Link>
                 </div>
             }

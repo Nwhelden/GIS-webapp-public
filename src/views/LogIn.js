@@ -1,27 +1,24 @@
 import React, { useState } from 'react'
 import { auth } from '../firebase'
-import { Link, useHistory } from "react-router-dom"
-
+import { Link } from "react-router-dom"
+import OrgList from '../components/authentication/OrgList'
 import { useAuth } from "../contexts/Auth"
 
 export default function LogIn() {
     const [error, setError] = useState('');
     const [pending, setPending] = useState(false); //set true when a signup request is made; prevents multiple signups in a signle instance
-    //const history = useHistory();
-    const {setPermsFlag} = useAuth();
+    const {currentUser} = useAuth();
 
     const handleSubmit = async (event) => {
         event.preventDefault();
         const { email, password } = event.target.elements; //get input from respective form fields
+        setError('');
+        setPending(true);
 
         //try to create user and redirect; otherwise display error
-        try {
-            setError('');
-            setPending(true);
-            setPermsFlag(true);
-            await auth.signInWithEmailAndPassword(email.value, password.value);
-            //history.push('/');
-        } catch(err) {
+        await auth.signInWithEmailAndPassword(email.value, password.value).then((userCredential) => {
+            //...
+        }).catch((err) => {
             switch(err.code) {
                 case "auth/user-not-found":
                     setError("No user with this email exists.");
@@ -40,31 +37,38 @@ export default function LogIn() {
                     break;
             }
             console.log(err);
-        } finally {
+        }).finally(() => {
             setPending(false);
-        }
+        })
     }
 
     return (
         <div>
-            <div>
-                <h2>Log In</h2>
-                <form onSubmit={handleSubmit}>
-                    <label>
-                        Email
-                        <input name="email" type="text" />
-                    </label>
-                    <label>
-                        Password
-                        <input name="password" type="password" />
-                    </label>
-                    <button disabled={pending}>Log In</button>
-                </form>
-                {error && <p style={{color: 'red'}}>{error}</p>}
-            </div>
-            <div>
-                <Link to="/signup">Sign Up</Link>
-            </div>
+            { currentUser &&
+                <OrgList />
+            }
+            { !currentUser &&
+                <div>
+                    <div>
+                        <h2>Log In</h2>
+                        <form onSubmit={handleSubmit}>
+                            <label>
+                                Email
+                                <input name="email" type="text" />
+                            </label>
+                            <label>
+                                Password
+                                <input name="password" type="password" />
+                            </label>
+                            <button disabled={pending}>Log In</button>
+                        </form>
+                        {error && <p style={{color: 'red'}}>{error}</p>}
+                    </div>
+                    <div>
+                        <Link to="/signup">Sign Up</Link>
+                    </div>
+                </div>
+            }
         </div>
     )
 }

@@ -1,7 +1,6 @@
 import React, { useState } from 'react'
-import firebase from 'firebase/app'; //need to import uninitialized firebase object to get timestamp value
-import { auth, db } from '../../firebase'
-import { Link, useHistory } from 'react-router-dom'
+import { auth } from '../../firebase'
+import { Link } from 'react-router-dom'
 import { useAuth } from "../../contexts/Auth"
 
 //REFACTOR: some of the functionality overlapped by UserSignUp and OrgSignup could be handled by a cloud function using authentication triggers
@@ -11,52 +10,18 @@ import { useAuth } from "../../contexts/Auth"
 export default function SignUp() {
     const [error, setError] = useState('');
     const [pending, setPending] = useState(false); //set true when a signup request is made; prevents multiple signups in a single instance
-    //const history = useHistory();
-    const {setSignupFlag, setTestFlag} = useAuth();
+    const {setPermsFlag} = useAuth();
 
     const handleSubmit = async (event) => {
         event.preventDefault();
-        const { name, email, password, key } = event.target.elements; //get input from respective form fields
+        const { name, email, password } = event.target.elements; //get input from respective form fields
         setError('');
         setPending(true);
-        setSignupFlag(true);
 
         //try to create user and redirect; otherwise display error
         await auth.createUserWithEmailAndPassword(email.value, password.value).then((userCredential) => {
-            console.log("test1");
-
-            //auth.currentUser.uid
-            //??? for some reason useAuth() to get currentUser returns null
-
-            //after creating a user, create a user document with additional information for the database
-            var userData = {
-                userID: userCredential.user.uid,
-                orgID: key.value, 
-                name: name.value, 
-                email: email.value, 
-                role: "collaborator", 
-                groups: [],
-                created: firebase.firestore.FieldValue.serverTimestamp()
-            }
-
-            //try adding the user document to the database and redirect to dashboard
-            db.collection(`organizations/${key.value}/users`).doc(userCredential.user.uid).set(userData).then(() => {
-                userCredential.user.updateProfile({displayName: name.value});
-                return db.collection(`organizations/${key.value}/privateData`).get()
-            }).then((querySnapshot) => {
-                querySnapshot.forEach((doc) => {
-                    doc.ref.update({[`roles.${userCredential.user.uid}`]: "guest"})
-                })
-                console.log("redirecting...");
-                //setSignupFlag(true);
-                //history.push('/');
-            }).catch((err) => {
-
-                //if user can't be added to the database, delete the user
-                userCredential.user.delete();
-                console.log(err);
-                setError("Could not connect with the database. Please try again later.");
-            })
+            userCredential.user.updateProfile({displayName: name.value});
+           setPermsFlag({redirect: true});
         }).catch((err) => {
             switch(err.code) {
                 case "auth/email-already-in-use":
@@ -75,8 +40,6 @@ export default function SignUp() {
             console.log(err);
         }).finally(() => {
             setPending(false);
-            setTestFlag(true);
-            console.log("here")
         })
     }
 
@@ -96,10 +59,6 @@ export default function SignUp() {
                     <label>
                         Password
                         <input name="password" type="password" />
-                    </label>
-                    <label>
-                        Organization Key
-                        <input name="key" type="password" />
                     </label>
                     <button disabled={pending}>Sign Up</button>
                 </form>

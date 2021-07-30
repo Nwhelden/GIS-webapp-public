@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useContext, useRef } from 'react'
+import React, { useEffect, useState, useContext } from 'react'
 import { auth, db } from '../firebase'
 import { useHistory } from 'react-router-dom'
 
@@ -13,15 +13,48 @@ export function useAuth() {
 export function AuthProvider({ children }) {
     const [currentUser, setCurrentUser] = useState(null); //possibly don't need? refactor: https://firebase.google.com/docs/reference/js/firebase.auth.Auth#currentuser
     const [currentPerms, setCurrentPerms] = useState(null); //used for keeping track of important data (ex: use roles, security checks) instead of having to make on-demand queries
-    const [permsFlag, setPermsFlag] = useState(false); //when set means we want to get user perms for an organizations
-    const [contextError, setContextError] = useState("");
+    const [permsFlag, setPermsFlag] = useState(null); //when set means we want to get user perms for an organization; typically after perms created and/or we want redirection
+    const [contextError, setContextError] = useState(""); //in case perms were not set correctly, log the error 
     const [pending, setPending] = useState(true); //set false when there is a current user
     const history = useHistory();
-    const previousStates = useRef({permsFlag, currentUser});
+
+    const setOrg = (orgID, orgName) => {
+        return new Promise((resolve, reject) => {
+           resolve(sessionStorage.setItem('organization', JSON.stringify({id: orgID, name: orgName}))) 
+        })
+    }
 
     //get both the information specific to the user and the information specific to the group
-    const getPerms = async (user, redirect) => {
+    const getPerms = async (user, organization, redirect) => {
+        /*
+        if (organization.id === 0) {
+            console.log("test4.1");
+            setCurrentPerms({orgName: organization.name, role: "guest"})
+            if (redirect) {
+                console.log("redirected");
+                history.push('/');
+            }
+            setPending(false);
+            return;
+        }
+        */
+
         console.log("retrieving data...");
+        await db.collection(`organizations/${organization.id}/users`).doc(user.uid).get().then((doc) => {
+            console.log(doc.data());
+            setCurrentPerms({orgName: organization.name, ...doc.data()});
+        }).catch((err) => {
+            setCurrentPerms({orgName: organization.name, role: "guest"});
+            setContextError(err.message);
+        }).finally(() => {
+            if (redirect) {
+                console.log("redirected");
+                history.push('/');
+            }
+            setPending(false);
+        })
+
+        /*
         await db.collectionGroup('users').where('userID', '==', user.uid).get().then((querySnapshot) => {
             //throw "err"
             querySnapshot.forEach((doc) => {
@@ -33,30 +66,33 @@ export function AuthProvider({ children }) {
                     })
                 }).finally(() => {
                     if (redirect) {
+                        console.log("redirected")
                         history.push('/');
                     }
                     setPending(false);
                 })
             })
-        }).catch((err) => {
+        }).catch((err) => { //don't want application to brick if perms can't be retrieved; 
             console.log(err);
             setContextError(err.message);
             if (redirect) {
+                console.log("redirected")
                 history.push('/');
             }
             setPending(false);
         })
+        */
     }
 
     //if a user is signing up, data may not be ready for retrieval when onAuthStateChanged is triggered
     //if there is a valid user on signup, get the data when it's ready (not like on login, where data is retrieved when onAuthStateChanged is triggered)
     useEffect(() => {
-        if (permsFlag && currentUser) {
-            console.log("retrieval triggered")
-            getPerms(currentUser, true);
-            setPermsFlag(false);
+        const organization = JSON.parse(sessionStorage.getItem('organization'));
+        if (permsFlag && currentUser && organization) {
+            getPerms(currentUser, organization, permsFlag.redirect);
+            setPermsFlag(null);
         }
-    }, [permsFlag])
+    }, [permsFlag]) // eslint-disable-line react-hooks/exhaustive-deps
 
     //on initial render setup authentication observer
     useEffect(() => {
@@ -64,24 +100,33 @@ export function AuthProvider({ children }) {
             setCurrentUser(user);
 
             if (user) {
-                console.log(`logged in as ${user.email}`)
-                getPerms(user, false);
+                console.log(`logged in as ${user.email}`);
+                const organization = JSON.parse(sessionStorage.getItem('organization'));
+                //auth.signOut()
+                if (organization) {
+                    getPerms(user, organization, false);
+                }
+                else {
+                    setPending(false);
+                }
             } else {
-                console.log("logged out")
+                console.log("logged out");
+                sessionStorage.removeItem('organization');
                 setPending(false);
             }
         });
 
         //listener cleanup; onAuthStateChanged triggers when a user signs-in and returns a function to unsubscribe
         return cleanup;
-    }, []);
+    }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
     const values = {
         currentUser,
         currentPerms,
         contextError,
         setCurrentPerms,
-        setPermsFlag
+        setPermsFlag,
+        setOrg
     }
 
     //render the rest of the application (children) when there is a current user and permissions have been loaded

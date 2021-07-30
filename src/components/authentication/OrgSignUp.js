@@ -9,7 +9,7 @@ export default function SignUp() {
     const [pending, setPending] = useState(false); //set true when a signup request is made; prevents multiple signups in a single instance
     const [authComplete, setAuthComplete] = useState(false); //set true when an organization is created
     const [msgData, setMsgData] = useState(); 
-    const {setPermsFlag} = useAuth();
+    const {setPermsFlag, setOrg} = useAuth();
 
     const handleSubmit = async (event) => {
         event.preventDefault();
@@ -32,33 +32,25 @@ export default function SignUp() {
                 orgID: orgRef.id, 
                 name: ownerName.value, 
                 email: email.value, 
+                role: "owner",
+                groups: {},
                 created: firebase.firestore.FieldValue.serverTimestamp()
             }
             var userRef = db.collection("organizations").doc(orgRef.id).collection("users").doc(userCredential.user.uid);
             batch.set(userRef, userData);
 
-            //want a privateData document for the organization, which keeps track of organization-wide permissions (roles)
-            /*
-                orgID
-                users: {
-                    role: "",
-                    groups: {
-                        "name" : "permission"
-                    }
-                }
-            */
-            var privateData = {
-                orgID: orgRef.id,
-                roles: {}
-            }
-            privateData.roles[userCredential.user.uid] = "owner";
+            //privateData document contains sensitive information that only the owner can read
+            var privateData = {orgID: orgRef.id};
             batch.set(dataRef, privateData);
 
             //use a batch write to create the organization and an entry in the database for the owner account at the same time
             batch.commit().then(() => {
-                setMsgData({oName: orgName.value, uEmail: email.value, oKey: orgRef.id});
+                setMsgData({oName: orgName.value, uEmail: email.value});
                 userCredential.user.updateProfile({displayName: ownerName.value});
-                setPermsFlag(true);
+
+                return setOrg(orgRef.id, orgName.value);
+            }).then(() => {
+                setPermsFlag({redirect: false});
                 setAuthComplete(true);
             }).catch((err) => {
 

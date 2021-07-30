@@ -1,23 +1,27 @@
-import React, { useState, useEffect, useRef } from 'react'
+import React, { useState, useEffect } from 'react'
 import { auth, db } from '../firebase'
 import { useAuth } from "../contexts/Auth"
 import UserList from '../components/dashboard/UserList'
 import FileList from '../components/dashboard/FileList'
 
 export default function Dashboard() {
-    //const currentUser = useAuth();  
     const [admin, setAdmin] = useState(false);
     const [organization, setOrganization] = useState({});
     const [loading, setLoading] = useState(false);
-    const {currentUser, currentPerms, setPermsFlag} = useAuth();
+    const {currentUser, currentPerms} = useAuth();
+    const admins = ["owner", "admin"]
 
+    /*
     useEffect(() => {
         console.log(organization)
     }, [organization])
+    */
 
     //get organization and determine if user is admin
+    /*
     useEffect(() => {
-        console.log(currentPerms.roles['test'])
+        //console.log(currentPerms.roles['test'])
+        console.log("testing dashboard")
         const getOrg = async () => {
             await db.collectionGroup('users').where('userID', '==', currentUser.uid).get().then((querySnapshot) => {
                 querySnapshot.forEach((doc) => {
@@ -27,7 +31,9 @@ export default function Dashboard() {
                         setOrganization({id: organization.id, ...documentSnapshot.data()});
                     })
 
-                    /*
+                                //db.collectionGroup('users').where('userID', '==', user.uid).get().then((querySnapshot) => {
+
+                    ---
                     organization.collection("privateData").get().then((querySnapshot) => {
                         querySnapshot.forEach((doc) => {
                             if (doc.data().roles[currentUser.uid] === "owner") {
@@ -36,7 +42,7 @@ export default function Dashboard() {
                             }
                         })
                     })
-                    */
+                    ---
                 })
             })
         }
@@ -44,40 +50,30 @@ export default function Dashboard() {
         setLoading(true);
         getOrg();
         setLoading(false);
-    }, [])
-
-    const buttonClick2 = () => {
-        setPermsFlag(true);
-    }
-
-    const buttonClick = () => {
-        console.log(currentPerms.orgID);
-    }
+    }, []) // eslint-disable-line react-hooks/exhaustive-deps
+    */
 
     return (
         <div>
-            <h1>Dashboard</h1>
-            { loading &&
+            { (currentUser && !admins.includes(currentPerms.role)) &&
                 <div>
-                    <p>Loading...</p>
+                    <h1>Dashboard</h1>
+                    <p>User dashboard... Nothing here yet!</p>
                 </div>
             }
-            { (!loading && auth.currentUser) &&
+            { (currentUser && admins.includes(currentPerms.role)) &&
                 <div>
+                    <h1>Dashboard</h1>
                     <div>
                         <h4>Users</h4>
-                        <UserList org={organization} admin={admin}/>
+                        <UserList org={{id: currentPerms.orgID, name: currentPerms.orgName}} />
                     </div>
                     <div>
                         <h4>Files</h4>
-                        <FileList org={organization} admin={admin}/>
+                        <FileList org={{id: currentPerms.orgID, name: currentPerms.orgName}} />
                     </div>
                 </div>
             }
-            <p>{currentUser.uid}</p>
-            <p>{currentPerms.orgID}</p>
-            <button onClick={buttonClick}>test</button>
-            <button onClick={buttonClick2}>test2</button>
         </div>
     )
 }

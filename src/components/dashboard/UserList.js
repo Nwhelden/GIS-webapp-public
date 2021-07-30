@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { db } from '../../firebase'
+import { db, functions } from '../../firebase'
 import UserCard from './UserCard'
 
 export default function UserList(props) {
@@ -38,11 +38,34 @@ export default function UserList(props) {
 
     const toggleAdd = () => {
         setAddRender(!addRender);
+        setError(false);
+        setSuccess(false);
     }
 
     const handleAdd = async (event) => {
         event.preventDefault();
-        console.log(users);
+        const { email, role } = event.target.elements;
+        setError('');
+        setSuccess('');
+        setPending(true);
+
+        var data = {
+            email: email.value,
+            role: role.value,
+            orgID: props.org.id
+        }
+
+        //call cloud function
+        const addUser = functions.httpsCallable('addUser');
+        await addUser(data).then((result) => {
+            setSuccess(result.data.message);
+            setAddRender(false);
+        }).catch((err) => {
+            console.log(err);
+            setError(err.message);
+        }).finally(() => {
+            setPending(false);
+        })
     }
 
     return (
@@ -67,20 +90,15 @@ export default function UserList(props) {
                                     </label>
                                     <label>
                                         Role
-                                        <select name="role">
-                                            <ul>
-                                                {roles.map((role) => (
-                                                    <li key={role}>
-                                                        <option value=""></option>
-                                                    </li>
-                                                ))}
-                                            </ul>
-                                        </select>
+                                        <select name="role">{roles.map((role, index) => <option key={index}>{role}</option>)}</select>
                                     </label>
                                     <button disabled={pending}>Submit</button>
                                 </form>
                             </div>
                         }
+                        {pending && <p>Loading...</p>}
+                        {success && <p style={{color: 'green'}}>{success}</p>}
+                        {error && <p style={{color: 'red'}}>{error}</p>}
                     </div>
                 </div>
             }
