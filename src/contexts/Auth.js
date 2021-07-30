@@ -89,6 +89,7 @@ export function AuthProvider({ children }) {
     useEffect(() => {
         const organization = JSON.parse(sessionStorage.getItem('organization'));
         if (permsFlag && currentUser && organization) {
+            console.log(permsFlag.redirect);
             getPerms(currentUser, organization, permsFlag.redirect);
             setPermsFlag(null);
         }

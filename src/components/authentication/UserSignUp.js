@@ -10,7 +10,7 @@ import { useAuth } from "../../contexts/Auth"
 export default function SignUp() {
     const [error, setError] = useState('');
     const [pending, setPending] = useState(false); //set true when a signup request is made; prevents multiple signups in a single instance
-    const {setPermsFlag} = useAuth();
+    const {setPermsFlag, setOrg} = useAuth();
 
     const handleSubmit = async (event) => {
         event.preventDefault();
@@ -21,7 +21,9 @@ export default function SignUp() {
         //try to create user and redirect; otherwise display error
         await auth.createUserWithEmailAndPassword(email.value, password.value).then((userCredential) => {
             userCredential.user.updateProfile({displayName: name.value});
-           setPermsFlag({redirect: true});
+            return setOrg(0, "Demo");
+        }).then(() => {
+            setPermsFlag({redirect: true});
         }).catch((err) => {
             switch(err.code) {
                 case "auth/email-already-in-use":
