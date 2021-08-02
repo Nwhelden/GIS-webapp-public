@@ -42,6 +42,7 @@ export default function LogIn() {
         })
     }
 
+    //if there are no perms set or session expires, render OrgList (component handles setting user permissions on login) instead of login prompt
     return (
         <div>
             { currentUser &&

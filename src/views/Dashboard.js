@@ -1,13 +1,13 @@
-import React, { useState, useEffect } from 'react'
-import { auth, db } from '../firebase'
+import React from 'react'
+//import { auth, db } from '../firebase'
 import { useAuth } from "../contexts/Auth"
 import UserList from '../components/dashboard/UserList'
 import FileList from '../components/dashboard/FileList'
 
 export default function Dashboard() {
-    const [admin, setAdmin] = useState(false);
-    const [organization, setOrganization] = useState({});
-    const [loading, setLoading] = useState(false);
+    //const [admin, setAdmin] = useState(false);
+    //const [organization, setOrganization] = useState({});
+    //const [loading, setLoading] = useState(false);
     const {currentUser, currentPerms} = useAuth();
     const admins = ["owner", "admin"]
 
@@ -53,6 +53,7 @@ export default function Dashboard() {
     }, []) // eslint-disable-line react-hooks/exhaustive-deps
     */
 
+    //render different dashboards depending on user role
     return (
         <div>
             { (currentUser && !admins.includes(currentPerms.role)) &&

@@ -9,6 +9,7 @@ export default function OrgList() {
     const [pending, setPending] = useState(false);
     const {currentUser, setPermsFlag, setOrg} = useAuth();
 
+    //get all the organizations a user is part of on initial render
     useEffect(() => {
         const getOrgs = async () => {
             console.log("Getting organizations...")
@@ -35,6 +36,7 @@ export default function OrgList() {
         getOrgs()
     }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
+    //if available, user can login to an organization
     const toggleOrg = async (orgID, orgName) => {
         setPending(true);
         await setOrg(orgID, orgName).then(() => {
@@ -42,6 +44,7 @@ export default function OrgList() {
         })
     }
 
+    //user can continue login without being part of an organization
     const toggleDemo = async () => {
         setPending(true);
         await setOrg(0, "Demo").then(() => {

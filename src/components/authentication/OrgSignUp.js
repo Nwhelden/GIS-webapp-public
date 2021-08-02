@@ -48,8 +48,11 @@ export default function SignUp() {
                 setMsgData({oName: orgName.value, uEmail: email.value});
                 userCredential.user.updateProfile({displayName: ownerName.value});
 
+                //set the org of the authenticated user to the  
                 return setOrg(orgRef.id, orgName.value);
             }).then(() => {
+
+                //get perms and don't redirect; want to display message (triggered by setAuthComplete) before redirecting to dashboard
                 setPermsFlag({redirect: false});
                 setAuthComplete(true);
             }).catch((err) => {

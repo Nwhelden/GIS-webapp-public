@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { auth, storage, db } from '../../firebase'
+import { storage, db } from '../../firebase'
 import FileCard from './FileCard'
 
 export default function FileList(props) {

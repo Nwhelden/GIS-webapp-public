@@ -8,6 +8,8 @@ export default function UserCard(props) {
     const [pending, setPending] = useState(false);
     const [updateRender, setUpdateRender] = useState(false);
 
+    const roles = ["guest", "collaborator", "admin"]
+
     const toggleUpdate = () => {
         setUpdateRender(!updateRender);
         setDelPrompt(false);
@@ -20,8 +22,7 @@ export default function UserCard(props) {
         setError('');
         setSuccess('');
         setPending(true);
-        const { name, role } = e.target.elements;
-        const roles = ["editor", "collaborator", "guest"];
+        const { role } = e.target.elements;
 
         //check to see if role is valid
         if (role.value) {
@@ -42,12 +43,14 @@ export default function UserCard(props) {
         };
 
         //variable update; don't need to update all fields, only whatever you provide input to
+        /*
         if (name) {
             data.auth = true;
             data.doc = true;
             data.authData.displayName = name.value;
             data.docData.name = name.value;
         }
+        */  
         if (role) {
             data.doc = true;
             data.docData.role = role.value;
@@ -111,12 +114,8 @@ export default function UserCard(props) {
             { updateRender &&
                 <form onSubmit={handleUpdate}>
                     <label>
-                        Name
-                        <input name="name" type="text" />
-                    </label>
-                    <label>
                         Role
-                        <input name="role" type="text" />
+                        <select name="role">{roles.map((role, index) => <option key={index}>{role}</option>)}</select>
                     </label>
                     <button disabled={pending}>Submit</button>
                 </form>

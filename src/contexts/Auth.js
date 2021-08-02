@@ -24,6 +24,7 @@ export function AuthProvider({ children }) {
         })
     }
 
+    //every session (on login, sign up, refresh) need to get permissions for the authenticated user
     //get both the information specific to the user and the information specific to the group
     const getPerms = async (user, organization, redirect) => {
         /*
@@ -39,10 +40,17 @@ export function AuthProvider({ children }) {
         }
         */
 
+        //query returns undefined (not an error) if doc does not exist
         console.log("retrieving data...");
         await db.collection(`organizations/${organization.id}/users`).doc(user.uid).get().then((doc) => {
-            console.log(doc.data());
-            setCurrentPerms({orgName: organization.name, ...doc.data()});
+            if (doc.data()) {
+                console.log("Organization not found")
+                setCurrentPerms({orgName: organization.name, ...doc.data()});
+            }
+            else {
+                console.log("Organization found")
+                setCurrentPerms({orgName: organization.name, role: "guest"});
+            }
         }).catch((err) => {
             setCurrentPerms({orgName: organization.name, role: "guest"});
             setContextError(err.message);
@@ -95,6 +103,13 @@ export function AuthProvider({ children }) {
         }
     }, [permsFlag]) // eslint-disable-line react-hooks/exhaustive-deps
 
+    //log current permissions
+    useEffect(() => {
+        if(currentPerms) {
+            console.log(currentPerms)
+        }
+    }, [currentPerms])
+
     //on initial render setup authentication observer
     useEffect(() => {
         const cleanup = auth.onAuthStateChanged((user) => {
@@ -103,16 +118,19 @@ export function AuthProvider({ children }) {
             if (user) {
                 console.log(`logged in as ${user.email}`);
                 const organization = JSON.parse(sessionStorage.getItem('organization'));
-                //auth.signOut()
+                
                 if (organization) {
+                    //handles getting perms on refresh (don't want to get perms if session ended / there is no org in session storage)
                     getPerms(user, organization, false);
                 }
                 else {
+                    //if session expires, don't set currentPerms (causes redirection to Login, where user can reselect organization)
                     setPending(false);
                 }
             } else {
                 console.log("logged out");
                 sessionStorage.removeItem('organization');
+                setCurrentPerms(null);
                 setPending(false);
             }
         });

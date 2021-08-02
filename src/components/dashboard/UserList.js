@@ -20,6 +20,7 @@ export default function UserList(props) {
             setLoading(true);
             setPending(true);
             
+            //because onSnapshot is used, when a new user is added to the organization it will be added to the rendered list in realtime
             const unsubscribe = db.collection(`organizations/${props.org.id}/users`).orderBy("name").onSnapshot((querySnapshot) => {
                 const newUsers = querySnapshot.docs.map((doc) => ({
                     id: doc.id,
@@ -42,6 +43,7 @@ export default function UserList(props) {
         setSuccess(false);
     }
 
+    //pass relevent data to a cloud function that handles adding a user
     const handleAdd = async (event) => {
         event.preventDefault();
         const { email, role } = event.target.elements;
@@ -55,7 +57,6 @@ export default function UserList(props) {
             orgID: props.org.id
         }
 
-        //call cloud function
         const addUser = functions.httpsCallable('addUser');
         await addUser(data).then((result) => {
             setSuccess(result.data.message);
