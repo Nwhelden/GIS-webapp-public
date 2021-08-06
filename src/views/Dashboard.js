@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useState } from 'react'
 //import { auth, db } from '../firebase'
 import { useAuth } from "../contexts/Auth"
 import UserList from '../components/dashboard/UserList'
@@ -53,6 +53,52 @@ export default function Dashboard() {
     }, []) // eslint-disable-line react-hooks/exhaustive-deps
     */
 
+    const [test2, setTest2] = useState("default");
+    const [test1, setTest1] = useState("default");
+
+    const changeThing3 = () => {
+        return new Promise((resolve, reject) => {
+            resolve(testArr.push("success3"))
+        })
+    }
+
+    const failThing = () => {
+        return new Promise((resolve, reject) => {
+            reject("FAILED");
+        })
+    }
+
+    var testArr = [];
+
+    const changeThing2 = () => {
+        return new Promise((resolve, reject) => {
+            resolve(testArr.push("success2"))
+        })
+    }
+
+    const changeThing1 = () => {
+        return new Promise((resolve, reject) => {
+            resolve(testArr.push("success1"))
+        })
+    }
+
+    const handleTest = async () => {
+        console.log(testArr);
+        var promises = [];
+        promises.push(failThing())
+        promises.push(changeThing1())
+        promises.push(changeThing2())
+        promises.push(changeThing3())
+
+        await Promise.all(promises).then((result => {
+            console.log(result);
+            console.log(testArr);
+        })).catch((e) => {
+            console.log(e)
+            console.log(testArr);
+        })
+    }
+
     //render different dashboards depending on user role
     return (
         <div>
@@ -75,6 +121,9 @@ export default function Dashboard() {
                     </div>
                 </div>
             }
+            <button onClick={handleTest}>Test</button>
+            <div>{test1}</div>
+            <div>{test2}</div>
         </div>
     )
 }

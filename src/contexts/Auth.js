@@ -44,11 +44,11 @@ export function AuthProvider({ children }) {
         console.log("retrieving data...");
         await db.collection(`organizations/${organization.id}/users`).doc(user.uid).get().then((doc) => {
             if (doc.data()) {
-                console.log("Organization not found")
+                console.log("Organization found")
                 setCurrentPerms({orgName: organization.name, ...doc.data()});
             }
             else {
-                console.log("Organization found")
+                console.log("Organization not found")
                 setCurrentPerms({orgName: organization.name, role: "guest"});
             }
         }).catch((err) => {

@@ -10,7 +10,9 @@ export default function FileList(props) {
     const [uploadRender, setUploadRender] = useState(false);
     const [fileObj, setFileObj] = useState(null);
 
-    //get files of specified organization
+    const supportedTypes = ["geojson", "png", "jpg", "svg", "gltf"]
+
+    //get files of specified organization into an array
     useEffect(() => {
 
         if (props.org.id) {
@@ -45,45 +47,60 @@ export default function FileList(props) {
         setPending(true);
 
         const { name } = event.target.elements; //get input from respective form fields
-        const supportedTypes = ["geojson", "png", "jpg", "svg", "gltf"]
         console.log(fileObj);
         var extension = fileObj.name.split('.').pop();
 
+        //
         if (!supportedTypes.includes(extension)) {
             setError("File type not supported.")
             setPending(false);
             return;
         }
+        else {
 
-        var filename = fileObj.name.split('.')[0];
-        if (name.value) {
-            filename = name.value;
+            var filename = fileObj.name.split('.')[0];
+            if (name.value) {
+                filename = name.value;
+            }
+
+            //var filename = name.value + '.' + extension;
+
+            var storageRef = storage.ref();
+            var fileRef = storageRef.child(`organizations/${props.org.name}/${filename}`)
+            //const url = await fileRef.getDownloadURL();
+
+            var fileData = {
+                name: filename,
+                size: fileObj.size,
+                type: '.' + extension
+            }
+
+            console.log(fileData);
+
+            console.log("test");
+
+            fileRef.put(fileObj).then((snapshot) => {
+                console.log("Uploaded a file")
+                return db.collection(`organizations/${props.org.id}/files`).add(fileData)
+            }).then(() => {
+                console.log("Uploaded a file")
+            }).catch((err) => {
+                console.log("Upload failed")
+                console.log(err);
+            })
         }
+    }
 
-        //var filename = name.value + '.' + extension;
-
+    const testFunc = async () => {
         var storageRef = storage.ref();
-        var fileRef = storageRef.child(`organizations/${props.org.name}/${filename}`)
-        //const url = await fileRef.getDownloadURL();
-
-        var fileData = {
-            name: filename,
-            size: fileObj.size,
-            type: '.' + extension
-        }
-
-        console.log(fileData);
-
-        console.log("test");
-
-        fileRef.put(fileObj).then((snapshot) => {
-            console.log("Uploaded a file")
-            return db.collection(`organizations/${props.org.id}/files`).add(fileData)
-        }).then(() => {
-            console.log("Uploaded a file")
-        }).catch((err) => {
-            console.log("Upload failed")
-            console.log(err);
+        var listRef = storageRef.child(`organizations/${props.org.name}`)
+        listRef.listAll().then((res) => {
+            res.prefixes.forEach((folderRef) => {
+                console.log(folderRef);
+            })
+            res.items.forEach((itemRef) => {
+                console.log(itemRef);
+            })
         })
     }
 
@@ -97,6 +114,7 @@ export default function FileList(props) {
                 ))}
             </ul>
             <div>
+                <button onClick={() => testFunc()}>Test</button>
                 <button disabled={pending} onClick={() => toggleUpload()}>Add File</button>
                 { uploadRender &&
                     <form onSubmit={handleUpload}>
