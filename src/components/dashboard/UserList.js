@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react'
+import { useAuth } from "../../contexts/Auth"
 import { db, functions } from '../../firebase'
 import UserCard from './UserCard'
 
@@ -9,7 +10,7 @@ export default function UserList(props) {
     const [pending, setPending] = useState(false);
     const [users, setUsers] = useState([]);
     const [addRender, setAddRender] = useState(false);
-
+    const {currentPerms} = useAuth();
     const roles = ["guest", "collaborator", "admin"]
 
     //get users of specified organization
@@ -54,6 +55,7 @@ export default function UserList(props) {
         var data = {
             email: email.value,
             role: role.value,
+            contextRole: currentPerms.role,
             orgID: props.org.id
         }
 

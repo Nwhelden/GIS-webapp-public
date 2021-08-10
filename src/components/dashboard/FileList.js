@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react'
+import { useAuth } from "../../contexts/Auth"
 import { storage, db } from '../../firebase'
 import FileCard from './FileCard'
 
@@ -9,7 +10,7 @@ export default function FileList(props) {
     const [files, setFiles] = useState([]);
     const [uploadRender, setUploadRender] = useState(false);
     const [fileObj, setFileObj] = useState(null);
-
+    const {currentPerms} = useAuth();
     const supportedTypes = ["geojson", "png", "jpg", "svg", "gltf"]
 
     //get files of specified organization into an array
@@ -48,25 +49,28 @@ export default function FileList(props) {
 
         const { name } = event.target.elements; //get input from respective form fields
         console.log(fileObj);
-        var extension = fileObj.name.split('.').pop();
 
-        //
+        //make sure that the file type and size is supported before upload
+        var extension = fileObj.name.split('.').pop();
         if (!supportedTypes.includes(extension)) {
             setError("File type not supported.")
             setPending(false);
             return;
         }
+        else if (fileObj.size > 2147483648) {
+            setError("Maximum file size is 2GB")
+            setPending(false);
+            return;
+        }
         else {
 
+            //entering a name is optional; if a name isn't entered, use the original name of the file without the extension
             var filename = fileObj.name.split('.')[0];
             if (name.value) {
                 filename = name.value;
             }
 
-            //var filename = name.value + '.' + extension;
-
-            var storageRef = storage.ref();
-            var fileRef = storageRef.child(`organizations/${props.org.name}/${filename}`)
+            var fileRef = storage.ref().child(`organizations/${props.org.id}/${filename}`)
             //const url = await fileRef.getDownloadURL();
 
             var fileData = {
@@ -79,6 +83,7 @@ export default function FileList(props) {
 
             console.log("test");
 
+            //upload the file to the organization's storage, then create a corresponding doucment in the database with relative information
             fileRef.put(fileObj).then((snapshot) => {
                 console.log("Uploaded a file")
                 return db.collection(`organizations/${props.org.id}/files`).add(fileData)
@@ -103,6 +108,7 @@ export default function FileList(props) {
             })
         })
     }
+    //<button onClick={() => testFunc()}>Test</button>
 
     return (
         <div>
@@ -114,7 +120,6 @@ export default function FileList(props) {
                 ))}
             </ul>
             <div>
-                <button onClick={() => testFunc()}>Test</button>
                 <button disabled={pending} onClick={() => toggleUpload()}>Add File</button>
                 { uploadRender &&
                     <form onSubmit={handleUpload}>

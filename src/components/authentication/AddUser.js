@@ -47,3 +47,43 @@
                 setError("Could not connect with the database. Please try again later.");
             })
             */
+
+            //--- dashboard
+            /*
+            useEffect(() => {
+                console.log(organization)
+            }, [organization])
+            */
+
+            //get organization and determine if user is admin
+            /*
+            useEffect(() => {
+                //console.log(currentPerms.roles['test'])
+                console.log("testing dashboard")
+                const getOrg = async () => {
+                    await db.collectionGroup('users').where('userID', '==', currentUser.uid).get().then((querySnapshot) => {
+                        querySnapshot.forEach((doc) => {
+                            var organization = doc.ref.parent.parent;
+                            setOrganization(organization.id);
+                            organization.get().then((documentSnapshot) => {
+                                setOrganization({id: organization.id, ...documentSnapshot.data()});
+                            })
+                                        //db.collectionGroup('users').where('userID', '==', user.uid).get().then((querySnapshot) => {
+                            ---
+                            organization.collection("privateData").get().then((querySnapshot) => {
+                                querySnapshot.forEach((doc) => {
+                                    if (doc.data().roles[currentUser.uid] === "owner") {
+                                        setAdmin(true);
+                                        console.log("is admin");
+                                    }
+                                })
+                            })
+                            ---
+                        })
+                    })
+                }
+                setLoading(true);
+                getOrg();
+                setLoading(false);
+            }, []) // eslint-disable-line react-hooks/exhaustive-deps
+            */

@@ -1,4 +1,5 @@
 import React, { useState } from 'react'
+import { useAuth } from "../../contexts/Auth"
 import { functions } from '../../firebase'
 
 export default function UserCard(props) {
@@ -7,8 +8,9 @@ export default function UserCard(props) {
     const [delPrompt, setDelPrompt] = useState(false);
     const [pending, setPending] = useState(false);
     const [updateRender, setUpdateRender] = useState(false);
+    const {currentPerms} = useAuth();
 
-    const roles = ["guest", "collaborator", "admin"]
+    const roles = ["guest", "collaborator", "admin", "owner"]
 
     const toggleUpdate = () => {
         setUpdateRender(!updateRender);
@@ -17,6 +19,24 @@ export default function UserCard(props) {
         setSuccess(false);
     }
 
+    //not sure if needed? wasn't sure if if/else is synchronous in JS
+    const checkRole = (role) => {
+        return new Promise((resolve, reject) => {
+            if (role.value) {
+                if (!roles.includes(role.value)) {
+                    reject("Valid roles: owner, admin, collaborator, guest");
+                }
+                else {
+                    resolve();
+                }
+            }
+            else {
+                resolve();
+            }
+        })
+    }
+
+    //change user's role
     const handleUpdate = async (e) => {
         e.preventDefault();
         setError('');
@@ -24,78 +44,67 @@ export default function UserCard(props) {
         setPending(true);
         const { role } = e.target.elements;
 
-        //check to see if role is valid
-        if (role.value) {
-            if (!roles.includes(role.value)) {
-                setError(true);
-                setPending(false);
-                setError("Valid roles: owner, editor, collaborator, guest");
-                return;
+        await checkRole(role).then(() => {
+
+            var data = {
+                uid: props.user.id,
+                orgID: currentPerms.orgID,
+                contextRole: currentPerms.role,
+                role: role.value
             }
-        }
 
-        var data = {
-            uid: props.user.id,
-            doc: false,
-            auth: false,
-            docData: {},
-            authData: {}
-        };
-
-        //variable update; don't need to update all fields, only whatever you provide input to
-        /*
-        if (name) {
-            data.auth = true;
-            data.doc = true;
-            data.authData.displayName = name.value;
-            data.docData.name = name.value;
-        }
-        */  
-        if (role) {
-            data.doc = true;
-            data.docData.role = role.value;
-        }
-
-        const userEdit = functions.httpsCallable('userEdit');
-        await userEdit(data).then((result) => {
+            //right now edit is handled by a cloud function (in case info other than role needs to be updated and may require admin sdk)
+            //it could be also be done by querying user document locally then updating a field
+            const editUser = functions.httpsCallable('editUser');
+            return editUser(data)
+        }).then((result) => {
             setSuccess(result.data.message)
             setUpdateRender(false);
         }).catch((err) => {
             console.log(err);
             setError(err.message);
+            setPending(false);
         }).finally(() => {
             setPending(false);
         })
     }
 
-    const handleDelete = async () => {
+    //remove user from organization
+    const handleRemove = async () => {
         setError('');
         setSuccess('');
         setUpdateRender(false);
 
-        if (props.user.role === 'owner' && !delPrompt) {
+        if (props.user.role === 'owner') {
             setDelPrompt(true);
-            setError("Deleting the owner account will delete the entire organizaiton. Click delete again to continue.")
+            setError("Cannot remove the owner account. Please swap ownership permissions before removing user.")
         }
         else if (props.user.role !== 'owner' && !delPrompt) {
             setDelPrompt(true);
-            setError("Are you sure? Click delete again to continue.")
+            setError("Are you sure? Click 'remove' again to continue.")
         }
         else if (delPrompt) {
             setPending(true);
             setDelPrompt(false);
 
-            console.log(props.user);
-
             var data = {
-                uid: props.user.id
+                uid: props.user.id,
+                orgID: currentPerms.orgID,
+                contextRole: currentPerms.role
             }
 
-            //const uid = props.user.id;
-            //if you are deleting an owner account, delete the whole organization along with the other accounts in it
+            //removing a user could also be done locally by deleting user document in organization's collection 
+            const removeUser = functions.httpsCallable('removeUser');
+            await removeUser(data).then((result) => {
 
-            const userDelete = functions.httpsCallable('userDelete');
-            await userDelete(data).then((result) => {
+                /*
+                if you remove yourself
+                if (result ) {
+                    setOrg(orgRef.id, orgName.value)
+                    setPermsFlag({redirect: true});
+                }
+                */
+
                 setSuccess(result.data.message)
             }).catch((err) => {
                 console.log(err);
@@ -106,16 +115,46 @@ export default function UserCard(props) {
         }
     }
 
+    //prevents multiple users from having the owner role, and also prevents the owner role from being reassigned
+    //FUTURE: modify handleUpdate to allow swapping owner role with a user 
+    const disableSelect = (optionRole, userRole) => {
+
+        if (userRole === 'owner') {
+            return true;
+        }
+        else if (optionRole === 'owner') {
+            return true;
+        }
+        else {
+            return false;
+        }
+    }
+
+    //for editing a user's role, have default option of drop-down be the user's current role
+    /*
+    const defaultSelect = (optionRole, userRole) => {
+        return optionRole === userRole;
+    }
+    */
+    //selected={defaultSelect(role, props.user.role)
+
     return (
         <div>
             <p>{props.user.name}</p>
             <button disabled={pending} onClick={() => toggleUpdate()}>Update</button>
-            <button disabled={pending} onClick={() => handleDelete()}>Delete</button>
+            <button disabled={pending} onClick={() => handleRemove()}>Remove</button>
             { updateRender &&
                 <form onSubmit={handleUpdate}>
                     <label>
                         Role
-                        <select name="role">{roles.map((role, index) => <option key={index}>{role}</option>)}</select>
+                        <select name="role" defaultValue={props.user.role} >
+                            {roles.map((role, index) => 
+                                <option 
+                                    value={role}
+                                    disabled={disableSelect(role, props.user.role)} 
+                                    key={index}>
+                                {role}</option>)}
+                        </select>
                     </label>
                     <button disabled={pending}>Submit</button>
                 </form>
