@@ -1,0 +1,16 @@
+.App {
+    background-color: #d0fce7;
+    color:black;
+    min-height: 100vh;
+    min-width: 100vw;
+};
+.Title{
+    color:black;
+    font-size: larger;
+}
+.Card{
+    border-radius: 10px;
+    background-color:rgb(255, 255, 255);
+    color: rgb(91, 91, 91);
+    box-shadow: 4px 4px rgb(63, 63, 63, 0.2);
+}

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react'
+import { Button } from 'react-bootstrap';
 import { useAuth } from "../../contexts/Auth"
 import { db, functions } from '../../firebase'
 import UserCard from './UserCard'
@@ -83,7 +84,7 @@ export default function UserList(props) {
                         ))}
                     </ul>
                     <div>
-                        <button disabled={pending} onClick={() => toggleAdd()}>Add User</button>
+                        <Button variant="outline-success" disabled={pending} onClick={() => toggleAdd()}>Add User</Button>
                         { addRender &&
                             <div>
                                 <form onSubmit={handleAdd}>
@@ -95,7 +96,7 @@ export default function UserList(props) {
                                         Role
                                         <select name="role">{roles.map((role, index) => <option key={index}>{role}</option>)}</select>
                                     </label>
-                                    <button disabled={pending}>Submit</button>
+                                    <Button variant="outline-success" disabled={pending}>Submit</Button>
                                 </form>
                             </div>
                         }

@@ -5,6 +5,9 @@ import LogIn from './views/LogIn'
 import Dashboard from './views/Dashboard'
 import Header from './components/routing/Header'
 import { AuthProvider } from "./contexts/Auth"
+import 'bootstrap/dist/css/bootstrap.min.css';
+import './App.css';
+
 
 function App() {
   const headerBlacklist = ["/login", "/signup"];

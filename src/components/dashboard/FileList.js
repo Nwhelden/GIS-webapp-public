@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react'
+import { Button } from 'react-bootstrap';
 import { useAuth } from "../../contexts/Auth"
 import { storage, db } from '../../firebase'
 import FileCard from './FileCard'
@@ -120,7 +121,7 @@ export default function FileList(props) {
                 ))}
             </ul>
             <div>
-                <button disabled={pending} onClick={() => toggleUpload()}>Add File</button>
+                <Button variant="outline-success" disabled={pending} onClick={() => toggleUpload()}>Add File</Button>
                 { uploadRender &&
                     <form onSubmit={handleUpload}>
                         <label>
@@ -131,7 +132,7 @@ export default function FileList(props) {
                             File
                             <input name="file" type="file" accept=".geojson,.png,.jpg,.svg,.gltf" required onChange={uploadFile}/>
                         </label>
-                        <button disabled={pending}>Upload</button>
+                        <Button variant="outline-success" disabled={pending}>Upload</Button>
                     </form>
                 }
                 {pending && <p>Loading...</p>}

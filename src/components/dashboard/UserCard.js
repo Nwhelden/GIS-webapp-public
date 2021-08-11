@@ -1,4 +1,5 @@
 import React, { useState } from 'react'
+import { Button } from 'react-bootstrap';
 import { useAuth } from "../../contexts/Auth"
 import { functions } from '../../firebase'
 
@@ -141,8 +142,8 @@ export default function UserCard(props) {
     return (
         <div>
             <p>{props.user.name}</p>
-            <button disabled={pending} onClick={() => toggleUpdate()}>Update</button>
-            <button disabled={pending} onClick={() => handleRemove()}>Remove</button>
+            <Button variant="outline-success" size="sm" disabled={pending} onClick={() => toggleUpdate()}>Update</Button>
+            <Button variant="outline-success" size="sm" disabled={pending} onClick={() => handleRemove()}>Remove</Button>
             { updateRender &&
                 <form onSubmit={handleUpdate}>
                     <label>
