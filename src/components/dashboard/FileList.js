@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { Button } from 'react-bootstrap';
-import { useAuth } from "../../contexts/Auth"
+//import { useAuth } from "../../contexts/Auth"
 import { storage, db } from '../../firebase'
 import FileCard from './FileCard'
 
@@ -11,7 +11,7 @@ export default function FileList(props) {
     const [files, setFiles] = useState([]);
     const [uploadRender, setUploadRender] = useState(false);
     const [fileObj, setFileObj] = useState(null);
-    const {currentPerms} = useAuth();
+    //const {currentPerms} = useAuth();
     const supportedTypes = ["geojson", "png", "jpg", "svg", "gltf"]
 
     //get files of specified organization into an array
@@ -97,6 +97,7 @@ export default function FileList(props) {
         }
     }
 
+    /*
     const testFunc = async () => {
         var storageRef = storage.ref();
         var listRef = storageRef.child(`organizations/${props.org.name}`)
@@ -109,6 +110,7 @@ export default function FileList(props) {
             })
         })
     }
+    */
     //<button onClick={() => testFunc()}>Test</button>
 
     return (
