@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { db} from '../../firebase'
+import { Link } from "react-router-dom"
 import { useAuth } from '../../contexts/Auth';
 
 export default function OrgList() {
@@ -75,7 +76,7 @@ export default function OrgList() {
                 </div>
             }
             <button disabled={pending} onClick={() => toggleDemo()}>Continue with demo version</button>
-            <p>Create an organization</p>
+            <Link to="/create">Create organization</Link>
         </div>
     )
 }

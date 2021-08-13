@@ -1,8 +1,8 @@
 import React, { useState } from 'react'
 import firebase from 'firebase/app'; //need to import uninitialized firebase object to get timestamp value
-import { auth, db } from '../../firebase'
+import { auth, db } from '../firebase'
 import { Link } from 'react-router-dom'
-import { useAuth } from "../../contexts/Auth"
+import { useAuth } from "../contexts/Auth"
 
 export default function SignUp() {
     const [error, setError] = useState('');
