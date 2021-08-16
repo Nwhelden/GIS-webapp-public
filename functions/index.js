@@ -13,11 +13,8 @@ admin.initializeApp();
 //remove references to user from organization
 const removeUserData = (userID, orgID) => {
     return new Promise((resolve, reject) => {
-        admin.firestore().collection(`organizations/${orgID}/users`).doc(userID).get().then((doc) => {
-
-            console.log(userID);
-            console.log(orgID);
-            console.log(doc);
+        const docRef = admin.firestore().collection(`organizations/${orgID}/users`).doc(userID);
+        docRef.get().then((doc) => {
 
             //remove user from all groups they were part of 
             //(expand on this code and add to promises to remove any additional references to user from the group)
@@ -31,7 +28,7 @@ const removeUserData = (userID, orgID) => {
             //code inside Promise executes synchronously; all promises should be in array before execution
             return Promise.allSettled(promises);
         }).then(() => {
-            return doc.ref.delete();
+            return docRef.delete();
         }).then(() => {
             resolve(`User ${userID} removed from ${orgID}`);
         }).catch((err) => {
