@@ -4,19 +4,15 @@ import { Link } from "react-router-dom"
 import { useAuth } from "../../contexts/Auth"
 
 export default function Header() {
-    const {currentUser, currentPerms} = useAuth();
+    const { currentUser } = useAuth();
 
     return (
         <div>
             { currentUser &&
                 <div>
                     <p>{currentUser.displayName}</p>
-                    <div>
-                        <button onClick={() => auth.signOut()}>Sign out</button>
-                        { (currentPerms.orgName === "Demo") &&
-                            <Link to="/create">Create organization</Link>
-                        }
-                    </div>
+                    <button onClick={() => auth.signOut()}>Sign out</button>
+                    <Link to="/login">Change organization</Link>
                 </div>
             }
             { !currentUser &&
