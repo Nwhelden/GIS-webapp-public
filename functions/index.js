@@ -1,62 +1,90 @@
 const functions = require("firebase-functions");
 const admin = require('firebase-admin');
+const gcs = require
 admin.initializeApp();
 
 //firebase deploy --only functions
 
-//REFACTOR: move adding user doc and updating user to a function tiggered by user creation
-//also, expand on possible error cases
+//REFACTOR: add proper error handling for Promise.all cases
 
 //HELPER 
 //---------------------------------------------------------------
 
 //remove references to user from organization
-/*
-const removeUserData = (user) => {
+const removeUserData = (userID, orgID) => {
     return new Promise((resolve, reject) => {
-        admin.firestore().collectionGroup('users').where('userID', '==', user.uid).get().then((querySnapshot) => {
-            querySnapshot.forEach((doc) => {
-                var data = doc.data();
-                admin.firestore().collection(`organizations/${data.orgID}/privateData`).get().then((querySnapshot) => {
-                    querySnapshot.forEach((doc) => {
-                        setCurrentData(doc.data());
-                    })
-                }).then(() => {
-                    resolve("Success");
-                })
-            })
+        const docRef = admin.firestore().collection(`organizations/${orgID}/users`).doc(userID);
+        docRef.get().then((doc) => {
+
+            //remove user from all groups they were part of 
+            //(expand on this code and add to promises to remove any additional references to user from the group)
+            var promises = [];
+            for (i = 0; i < doc.data().groups.length; i++) {
+                promises.push(admin.firestore().collection(`organizations/${orgID}/groups`).doc(doc.data().groups[i]).update({
+                    [`members.${userID}`]: admin.firestore.FieldValue.delete()
+                }))
+            }
+
+            //code inside Promise executes synchronously; all promises should be in array before execution
+            return Promise.allSettled(promises);
+        }).then(() => {
+            return docRef.delete();
+        }).then(() => {
+            resolve(`User ${userID} removed from ${orgID}`);
         }).catch((err) => {
-            reject(err);
+            console.log(err);
+            reject(`Could not remove user ${userID} from ${orgID}`);
         })
     })
 }
 
-//remove associated cloud storage data for organization, then delete organization doc (recursively deletes subcollections)
-const deleteOrganization = (org) => {
+//remove associated cloud storage data for organization, then delete everything under organization doc  
+const deleteOrganization = (orgID, orgRef) => {
     return new Promise((resolve, reject) => {
+        var promises = [];
 
-        var listRef = admin.storage().ref(`organizations/${org.name}`);
-        listRef.listAll().then((res) => {
+        //get bucket for deleting file data
+        const bucket = admin.storage().bucket('gs://rd-testing-summer-2021.appspot.com');
 
-            res.items.forEach((itemRef) => {
-                itemRef.delete()
+        //delete file documents
+        admin.firestore().collection(`organizations/${orgID}/files`).get().then((querySnapshot) => {
+            querySnapshot.forEach((doc) => {
+                promises.push(doc.ref.delete());
+                promises.push(bucket.file(doc.data().path).delete());
             })
-        }).catch((err) => {
-            reject(err);
         })
 
-
+        //delete organizations
         admin.firestore().collection(`organizations/${orgID}/users`).get().then((querySnapshot) => {
             querySnapshot.forEach((doc) => {
-
+                promises.push(doc.ref.delete());
             })
-            
+        })
+
+        //delete groups
+        admin.firestore().collection(`organizations/${orgID}/groups`).get().then((querySnapshot) => {
+            querySnapshot.forEach((doc) => {
+                promises.push(doc.ref.delete());
+            })
+        })
+
+        //delete privateData document
+        admin.firestore().collection(`organizations/${orgID}/privateData`).get().then((querySnapshot) => {
+            querySnapshot.forEach((doc) => {
+                promises.push(doc.ref.delete());
+            })
+        })
+
+        Promise.all(promises).then(() => {
+            return orgRef.delete();
+        }).then(() => {
+            resolve(`Organization ${orgID} deleted`);
         }).catch((err) => {
-            reject(err);
+            console.log(err);
+            reject(`Could not delete organization ${orgID}`);
         })
     })
 }
-*/
 
 //PUBLIC
 //---------------------------------------------------------------
@@ -179,7 +207,8 @@ exports.deleteOrg = functions.https.onCall((data, context) => {
 //AUTOMATIC 
 //---------------------------------------------------------------
 
-//TEMP
+//temp
+/*
 exports.deleteUserDoc = functions.auth.user().onDelete((user) => {
 
     //use a collection group query to search through all the 'users' subcollections to find the document of the user that was deleted
@@ -191,47 +220,41 @@ exports.deleteUserDoc = functions.auth.user().onDelete((user) => {
         })
     });
 })
+*/
 
-/*
 //when a user is deleted from authentication/console, want to automatically delete the corresponding user documents
 exports.deleteUserDoc = functions.auth.user().onDelete((user) => {
 
     //use a collection group query to search through all the 'users' subcollections to find the documents of the user that was deleted
     //all background functions need to return a promise
     return admin.firestore().collectionGroup('users').where('userID', '==', user.uid).get().then((querySnapshot) => {
-        console.log(user.uid);
-        var promises = [];
-        querySnapshot.forEach((userRef) => {
+        console.log(`Deleting user ${user.uid}...`);
+        querySnapshot.forEach((doc) => {
 
-            //check if user is the owner of an organization; if so, delete the organization
-            if (userRef.data().role === 'owner') {
+            //reference to organization document that contains the user document
+            var orgRef = doc.ref.parent.parent;
+
+            //check if user is the owner of the organization; if so, delete the organization
+            if (doc.data().role === 'owner') {
+                console.log(`User ${user.uid} is owner of ${orgRef.id}`);
 
                 //if you delete organization, no need to individually delete user data
-                var orgRef = doc.ref.parent.parent.get();
-                promises.push(deleteOrganization({id: orgRef.id, name: userRef.data().name}));
+                deleteOrganization(orgRef.id, orgRef).then((message) => {
+                    console.log(message);
+                }).catch((err) => {
+                    console.log(err);
+                })
             }
             else {
-
-                promises.push(removeUserData({id: user.uid, doc.id}));
+                removeUserData(user.uid, orgRef.id).then((message) => {
+                    console.log(message);
+                }).catch((err) => {
+                    console.log(err);
+                })
             }
-
-            //if you delete organization, no need to individually delete user data
-            //add deleteOrganization, custom promise, to promise.all with doc.ref.delete(), which returns a promise
-            //
-
-            removeUserData(user.uid, doc.id);
-            //doc.ref.delete();
         })
-
-        //code inside Promise executes synchronously; all promises should be in array before execution
-        return Promise.all(promises)     
-    }).then(() => {
-
-    }).catch((err) => {
-
     })
 })
-*/
 
 //deleting user from database/console
 

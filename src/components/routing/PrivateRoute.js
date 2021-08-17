@@ -27,3 +27,18 @@ export default function PrivateRoute({ component: Component, ...rest }) {
         }}/>
     )
     */
+
+    /*
+    const location = useLocation();
+    console.log(location);
+    return (
+        <Route {...rest} render={(props) => {
+            if (currentPerms) {
+                return currentUser ? <Component {...props} /> : <Redirect to='/login' /> 
+            }
+            else {
+                return currentUser ? <Component {...props} /> : <Redirect to='/login' />
+            }
+        }}/>
+    )
+    */

@@ -96,7 +96,7 @@ export default function UserList(props) {
                                         Role
                                         <select name="role">{roles.map((role, index) => <option key={index}>{role}</option>)}</select>
                                     </label>
-                                    <Button variant="outline-success" disabled={pending}>Submit</Button>
+                                    <Button variant="outline-success" type="submit" disabled={pending}>Submit</Button>
                                 </form>
                             </div>
                         }

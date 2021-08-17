@@ -34,6 +34,7 @@ export default function FileList(props) {
         }
     }, [props.org]);
 
+    //limits file selection to 1
     const uploadFile = (event) => {
         setFileObj(event.target.files[0])
     }
@@ -65,33 +66,29 @@ export default function FileList(props) {
         }
         else {
 
-            //entering a name is optional; if a name isn't entered, use the original name of the file without the extension
-            var filename = fileObj.name.split('.')[0];
+            //entering a name is optional; if a name isn't entered, use the original name of the file
+            var filename = fileObj.name;
             if (name.value) {
-                filename = name.value;
+                filename = name.value + '.' + extension;
             }
 
             var fileRef = storage.ref().child(`organizations/${props.org.id}/${filename}`)
             //const url = await fileRef.getDownloadURL();
 
             var fileData = {
-                name: filename,
+                name: filename.split('.')[0],
                 size: fileObj.size,
-                type: '.' + extension
+                type: '.' + extension,
+                path: `organizations/${props.org.id}/${filename}`
             }
-
-            console.log(fileData);
-
-            console.log("test");
 
             //upload the file to the organization's storage, then create a corresponding doucment in the database with relative information
             fileRef.put(fileObj).then((snapshot) => {
-                console.log("Uploaded a file")
-                return db.collection(`organizations/${props.org.id}/files`).add(fileData)
+                return db.collection(`organizations/${props.org.id}/files`).add(fileData);
             }).then(() => {
-                console.log("Uploaded a file")
+                console.log("Uploaded a file");
             }).catch((err) => {
-                console.log("Upload failed")
+                console.log("Upload failed");
                 console.log(err);
             })
         }
@@ -134,7 +131,7 @@ export default function FileList(props) {
                             File
                             <input name="file" type="file" accept=".geojson,.png,.jpg,.svg,.gltf" required onChange={uploadFile}/>
                         </label>
-                        <Button variant="outline-success" disabled={pending}>Upload</Button>
+                        <Button variant="outline-success" type="submit" disabled={pending}>Upload</Button>
                     </form>
                 }
                 {pending && <p>Loading...</p>}
